@@ -1,0 +1,312 @@
+{
+    "tasks": [
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 0,
+            "end": 2928
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 2928,
+            "end": 5856
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 5856,
+            "end": 8784
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 8784,
+            "end": 11712
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 11712,
+            "end": 14640
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 14640,
+            "end": 17568
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 17568,
+            "end": 20496
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 20496,
+            "end": 23424
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 23424,
+            "end": 26352
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 26352,
+            "end": 29280
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 29280,
+            "end": 32208
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 32208,
+            "end": 35136
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 35136,
+            "end": 38064
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 38064,
+            "end": 40992
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 40992,
+            "end": 43920
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 43920,
+            "end": 46848
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 46848,
+            "end": 49776
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 49776,
+            "end": 52704
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 52704,
+            "end": 55632
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 55632,
+            "end": 58560
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 58560,
+            "end": 61488
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 61488,
+            "end": 64416
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 64416,
+            "end": 67344
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 67344,
+            "end": 70272
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 70272,
+            "end": 73200
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 73200,
+            "end": 76128
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 76128,
+            "end": 79056
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 79056,
+            "end": 81984
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 81984,
+            "end": 84912
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 84912,
+            "end": 87840
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 87840,
+            "end": 90768
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 90768,
+            "end": 93696
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 93696,
+            "end": 96624
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 96624,
+            "end": 99552
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 99552,
+            "end": 102480
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 102480,
+            "end": 105408
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 105408,
+            "end": 108336
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 108336,
+            "end": 111264
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 111264,
+            "end": 114192
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 114192,
+            "end": 117120
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "start": 117120,
+            "end": 120048
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "start": 120048,
+            "end": 122976
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "LeftWrist",
+            "sensor": "Accelerometer",
+            "start": 122976,
+            "end": 125904
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "LeftWrist",
+            "sensor": "Gyroscope",
+            "start": 125904,
+            "end": 128832
+        }
+    ]
+}
