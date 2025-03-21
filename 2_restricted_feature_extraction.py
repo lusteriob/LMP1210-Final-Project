@@ -27,10 +27,10 @@ def apply_boss_multiscale(segment, window_sizes=[20, 40, 80], word_size=4, n_bin
     for window_size in window_sizes:
         boss = BOSS(window_size=window_size, word_size=word_size, n_bins=n_bins, norm_mean=False)
         hist = boss.fit_transform(segment_2d)
-        features.append(hist)
+        features.append(hist.toarray())  # 🔥 THIS LINE FIXES THE ERROR
     return np.hstack(features)
 
-def extract_all_boss_features(bin_metadata, segment_metadata):
+def extract_all_boss_features(bin_metadata, segment_metadata, max_length=5000):
     feature_list = []
     label_list = []
     patient_ids = []
@@ -41,21 +41,29 @@ def extract_all_boss_features(bin_metadata, segment_metadata):
         patient_id = row["PatientID"]
 
         segments = load_segments(file_path, segment_metadata)
-
         patient_features = []
         for segment in segments:
             segment_features = apply_boss_multiscale(segment)
             patient_features.append(segment_features.ravel())
 
+        # Combine all segment features
         full_feature_vector = np.hstack(patient_features)
-        feature_list.append(full_feature_vector)
+
+        # Pad or truncate to fixed length
+        padded = np.zeros(max_length, dtype=np.float32)
+        length = min(len(full_feature_vector), max_length)
+        padded[:length] = full_feature_vector[:length]
+
+        feature_list.append(padded)
         label_list.append(label)
         patient_ids.append(patient_id)
 
+    # Convert to DataFrame
     X = pd.DataFrame(feature_list)
     X["PatientID"] = patient_ids
     y = pd.Series(label_list, name="Label")
     return X, y
+
 
 def main():
     os.makedirs("features", exist_ok=True)  # Ensure the folder exists
