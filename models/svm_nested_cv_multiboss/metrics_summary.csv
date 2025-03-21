@@ -1,0 +1,16 @@
+feature_set,fold,balanced_accuracy,f1,precision,recall,roc_auc,best_params,reducer
+manual,1,0.68125,0.8301886792452831,0.8627450980392157,0.8,0.7454545454545455,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual,2,0.6539772727272728,0.7961165048543689,0.8541666666666666,0.7454545454545455,0.8181818181818181,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual,3,0.7164772727272728,0.8118811881188119,0.8913043478260869,0.7454545454545455,0.7551136363636364,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual,4,0.8102272727272728,0.8367346938775511,0.9534883720930233,0.7454545454545455,0.8375000000000001,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual,5,0.6702380952380952,0.723404255319149,0.8947368421052632,0.6071428571428571,0.7488095238095238,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",Identity
+multiboss,1,0.7840909090909092,0.8653846153846154,0.9183673469387755,0.8181818181818182,0.8363636363636364,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 0.01, 'svm__kernel': 'rbf'}",Identity
+multiboss,2,0.7357954545454546,0.8928571428571429,0.8771929824561403,0.9090909090909091,0.8295454545454546,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",Identity
+multiboss,3,0.6539772727272728,0.7961165048543689,0.8541666666666666,0.7454545454545455,0.7250000000000001,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",Identity
+multiboss,4,0.7568181818181818,0.8316831683168316,0.9130434782608695,0.7636363636363637,0.8147727272727272,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 0.01, 'svm__kernel': 'rbf'}",Identity
+multiboss,5,0.5797619047619048,0.8547008547008547,0.819672131147541,0.8928571428571429,0.793452380952381,"{'reduce': Identity(), 'svm__C': 10, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",Identity
+manual+multiboss,1,0.7306818181818182,0.8598130841121495,0.8846153846153846,0.8363636363636363,0.8090909090909091,"{'reduce': Identity(), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",Identity
+manual+multiboss,2,0.6903409090909092,0.8411214953271028,0.8653846153846154,0.8181818181818182,0.8318181818181818,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual+multiboss,3,0.7164772727272728,0.8118811881188119,0.8913043478260869,0.7454545454545455,0.7659090909090909,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual+multiboss,4,0.8375,0.8712871287128713,0.9565217391304348,0.8,0.8443181818181819,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
+manual+multiboss,5,0.7505952380952381,0.8349514563106796,0.9148936170212766,0.7678571428571429,0.7916666666666666,"{'reduce': SelectKBest(k=200), 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}",SelectKBest
