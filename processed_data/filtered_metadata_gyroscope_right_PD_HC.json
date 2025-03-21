@@ -1,0 +1,76 @@
+{
+  "tasks": [
+    {
+      "name": "Relaxed1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "X",
+      "start": 0,
+      "end": 976
+    },
+    {
+      "name": "Relaxed1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Y",
+      "start": 976,
+      "end": 1952
+    },
+    {
+      "name": "Relaxed1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Z",
+      "start": 1952,
+      "end": 2928
+    },
+    {
+      "name": "RelaxedTask1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "X",
+      "start": 2928,
+      "end": 3904
+    },
+    {
+      "name": "RelaxedTask1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Y",
+      "start": 3904,
+      "end": 4880
+    },
+    {
+      "name": "RelaxedTask1",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Z",
+      "start": 4880,
+      "end": 5856
+    },
+    {
+      "name": "TouchNose",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "X",
+      "start": 5856,
+      "end": 6832
+    },
+    {
+      "name": "TouchNose",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Y",
+      "start": 6832,
+      "end": 7808
+    },
+    {
+      "name": "TouchNose",
+      "wrist": "RightWrist",
+      "sensor": "Gyroscope",
+      "axis": "Z",
+      "start": 7808,
+      "end": 8784
+    }
+  ]
+}
