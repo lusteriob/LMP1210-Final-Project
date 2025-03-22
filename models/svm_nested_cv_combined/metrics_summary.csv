@@ -1,6 +1,0 @@
-fold,balanced_accuracy,f1,precision,recall,roc_auc,best_params
-1,0.7346590909090909,0.8349514563106796,0.8958333333333334,0.7818181818181819,0.7477272727272728,"{'feature_selector__mode': 'manual', 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}"
-2,0.7465909090909091,0.7472527472527473,0.9444444444444444,0.6181818181818182,0.7863636363636364,"{'feature_selector__mode': 'manual', 'svm__C': 0.1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}"
-3,0.6488636363636364,0.7551020408163265,0.8604651162790697,0.6727272727272727,0.7386363636363636,"{'feature_selector__mode': 'manual', 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}"
-4,0.8102272727272728,0.8367346938775511,0.9534883720930233,0.7454545454545455,0.8386363636363637,"{'feature_selector__mode': 'manual', 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}"
-5,0.6702380952380952,0.723404255319149,0.8947368421052632,0.6071428571428571,0.7488095238095238,"{'feature_selector__mode': 'manual', 'svm__C': 1, 'svm__gamma': 'scale', 'svm__kernel': 'rbf'}"

@@ -20,7 +20,7 @@ def load_segments(file_path, global_segment_meta):
     segments = [data[s["start"]:s["end"]] for s in global_segment_meta["tasks"]]
     return segments
 
-def extract_psd_features(signal, fs=128, max_freq=19):
+def extract_psd_features(signal, fs=100, max_freq=19):
     freqs, psd = welch(signal, fs=fs, nperseg=256)
     psd_log = np.log10(psd + 1e-10)  # avoid log(0)
     selected = psd_log[(freqs > 0) & (freqs <= max_freq)]
