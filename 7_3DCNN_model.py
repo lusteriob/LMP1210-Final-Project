@@ -4,40 +4,33 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
+from sklearn.model_selection import StratifiedKFold, ParameterGrid
 from sklearn.metrics import classification_report, precision_score, recall_score, f1_score, confusion_matrix
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from collections import Counter
+from tqdm import tqdm
 
 # === Dataset Definition ===
 class CWT3DImageDataset(Dataset):
-    def __init__(self, data_dir, split_file=None, target_size=(64, 128)):
+    def __init__(self, data_dir, patient_ids, target_size=(64, 128)):
         self.data_dir = data_dir
+        self.patient_ids = patient_ids
         self.target_size = target_size
-
-        if split_file:
-            with open(split_file, "r") as f:
-                self.patient_ids = [line.strip() for line in f if line.strip()]
-        else:
-            self.patient_ids = [f.split("_volume.npy")[0] for f in os.listdir(data_dir) if f.endswith("_volume.npy")]
 
     def __len__(self):
         return len(self.patient_ids)
 
     def __getitem__(self, idx):
         patient_id = self.patient_ids[idx]
-        volume_path = os.path.join(self.data_dir, f"{patient_id}_volume.npy")
-        label_path = os.path.join(self.data_dir, f"{patient_id}_label.txt")
-
-        volume = np.load(volume_path)  # Shape: (9, H, W)
-        with open(label_path, "r") as f:
+        volume = np.load(os.path.join(self.data_dir, f"{patient_id}_volume.npy"))
+        with open(os.path.join(self.data_dir, f"{patient_id}_label.txt")) as f:
             label = int(f.read().strip())
 
-        volume_tensor = torch.tensor(volume, dtype=torch.float32).unsqueeze(0)  # (1, 9, H, W)
-
-        # Resize to (1, 9, target_H, target_W)
-        volume_tensor = F.interpolate(volume_tensor, size=(self.target_size[0], self.target_size[1]), mode='bilinear', align_corners=False)
-
+        volume_tensor = torch.tensor(volume, dtype=torch.float32).unsqueeze(0)
+        volume_tensor = F.interpolate(volume_tensor, size=self.target_size, mode='bilinear', align_corners=False)
         label_tensor = torch.tensor(label, dtype=torch.long)
+
         return volume_tensor, label_tensor
 
 # === Model Definition ===
@@ -70,105 +63,166 @@ class Simple3DCNN(nn.Module):
         x = self.feature_extractor(x)
         return self.classifier(x)
 
-# === Config ===
-DATA_DIR = "features/cwt_numpy"
-SPLIT_DIR = os.path.join(DATA_DIR, "splits")
-BATCH_SIZE = 8
-EPOCHS = 10
-LEARNING_RATE = 1e-3
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-TARGET_SIZE = (64, 128)
+# === Training Function ===
+def train_model(model, train_loader, val_loader, class_weights, lr, device, epochs=50, patience=3):
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=1, verbose=True)
 
-# === Load Data ===
-train_dataset = CWT3DImageDataset(DATA_DIR, os.path.join(SPLIT_DIR, "train.txt"), target_size=TARGET_SIZE)
-val_dataset = CWT3DImageDataset(DATA_DIR, os.path.join(SPLIT_DIR, "val.txt"), target_size=TARGET_SIZE)
-test_dataset = CWT3DImageDataset(DATA_DIR, os.path.join(SPLIT_DIR, "test.txt"), target_size=TARGET_SIZE)
+    best_val_f1 = 0.0
+    no_improve_epochs = 0
+    early_stop = False
+    best_model_state = None
 
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+    for epoch in range(epochs):
+        if early_stop:
+            print("Early stopping triggered.")
+            break
 
-# === Compute Class Weights ===
-train_labels = []
-for pid in train_dataset.patient_ids:
-    with open(os.path.join(DATA_DIR, f"{pid}_label.txt")) as f:
-        train_labels.append(int(f.read().strip()))
+        model.train()
+        running_loss = 0.0
 
-label_counts = Counter(train_labels)
-total = sum(label_counts.values())
-class_weights = [total / label_counts[i] for i in sorted(label_counts.keys())]
-class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(DEVICE)
+        for images, labels in train_loader:
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
 
-# === Initialize Model ===
-sample_volume, _ = next(iter(train_loader))
-input_shape = sample_volume.shape[1:]  # (1, 9, H, W)
-model = Simple3DCNN(input_shape=input_shape).to(DEVICE)
-criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+        # === Validation ===
+        model.eval()
+        val_preds, val_true = [], []
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                _, preds = torch.max(outputs, 1)
+                val_preds.extend(preds.cpu().numpy())
+                val_true.extend(labels.cpu().numpy())
 
-# === Training Loop ===
-best_val_acc = 0.0
-for epoch in range(EPOCHS):
-    model.train()
-    running_loss = 0.0
+        val_acc = np.mean(np.array(val_preds) == np.array(val_true))
+        val_precision = precision_score(val_true, val_preds, zero_division=0)
+        val_recall = recall_score(val_true, val_preds, zero_division=0)
+        val_f1 = f1_score(val_true, val_preds, zero_division=0)
 
-    for images, labels in train_loader:
-        images, labels = images.to(DEVICE), labels.to(DEVICE)
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
+        scheduler.step(val_f1)
 
-    # Validation with per-class metrics
+        print(f"Epoch {epoch+1}/{epochs} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Precision: {val_precision:.4f} | Recall: {val_recall:.4f} | F1: {val_f1:.4f}")
+
+        if val_f1 > best_val_f1:
+            best_val_f1 = val_f1
+            no_improve_epochs = 0
+            best_model_state = model.state_dict()
+            print("Saved new best model!")
+        else:
+            no_improve_epochs += 1
+            print(f"No improvement for {no_improve_epochs} epoch(s).")
+            if no_improve_epochs >= patience:
+                early_stop = True
+
+    if best_model_state:
+        model.load_state_dict(best_model_state)
+    return model
+
+# === Evaluation Function ===
+def evaluate_model(model, test_loader, device):
     model.eval()
-    correct = 0
-    total = 0
-    val_preds = []
-    val_true = []
-
+    all_preds, all_labels = [], []
     with torch.no_grad():
-        for images, labels in val_loader:
-            images, labels = images.to(DEVICE), labels.to(DEVICE)
+        for images, labels in test_loader:
+            images = images.to(device)
             outputs = model(images)
             _, preds = torch.max(outputs, 1)
-            val_preds.extend(preds.cpu().numpy())
-            val_true.extend(labels.cpu().numpy())
-            correct += (preds == labels).sum().item()
-            total += labels.size(0)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.numpy())
 
-    val_acc = correct / total
-    val_precision = precision_score(val_true, val_preds, average='binary', pos_label=1, zero_division=0)
-    val_recall = recall_score(val_true, val_preds, average='binary', pos_label=1, zero_division=0)
-    val_f1 = f1_score(val_true, val_preds, average='binary', pos_label=1, zero_division=0)
+    print("\n=== Classification Report ===")
+    print(classification_report(all_labels, all_preds, target_names=["Healthy", "PD"]))
+    print("\n=== Confusion Matrix ===")
+    print(confusion_matrix(all_labels, all_preds))
 
-    print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Precision: {val_precision:.4f} | Recall: {val_recall:.4f} | F1: {val_f1:.4f}")
+# === Main Grid Search + Nested CV Driver ===
+def run_nested_cv(data_dir, outer_folds=5):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    all_ids = [f.split("_volume.npy")[0] for f in os.listdir(data_dir) if f.endswith("_volume.npy")]
+    all_labels = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in all_ids]
 
-    if val_acc > best_val_acc:
-        best_val_acc = val_acc
-        torch.save(model.state_dict(), "best_3dcnn_model.pth")
-        print("Saved new best model!")
+    param_grid = {
+        "lr": [1e-3, 5e-4],
+        "batch_size": [8],
+        "target_size": [(64, 128)]
+    }
 
-# === Evaluate on Test Set ===
-model.load_state_dict(torch.load("best_3dcnn_model.pth"))
-model.eval()
-all_preds = []
-all_labels = []
+    outer_cv = StratifiedKFold(n_splits=outer_folds, shuffle=True, random_state=42)
 
-with torch.no_grad():
-    for images, labels in test_loader:
-        images = images.to(DEVICE)
-        outputs = model(images)
-        _, preds = torch.max(outputs, 1)
-        all_preds.extend(preds.cpu().numpy())
-        all_labels.extend(labels.numpy())
+    for fold, (train_idx, test_idx) in enumerate(outer_cv.split(all_ids, all_labels)):
+        print(f"\n=== Outer Fold {fold+1}/{outer_folds} ===")
+        train_ids = [all_ids[i] for i in train_idx]
+        test_ids = [all_ids[i] for i in test_idx]
 
-# === Final Report ===
-print("\n=== Classification Report ===")
-print(classification_report(all_labels, all_preds, target_names=["Healthy", "PD"]))
+        best_score = 0.0
+        best_params = None
 
-# === Confusion Matrix ===
-print("\n=== Confusion Matrix ===")
-conf_matrix = confusion_matrix(all_labels, all_preds)
-print(conf_matrix)
+        inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+
+        for params in ParameterGrid(param_grid):
+            inner_scores = []
+            inner_labels = [all_labels[i] for i in train_idx]
+            for inner_train_idx, val_idx in inner_cv.split(train_ids, inner_labels):
+                inner_train_ids = [train_ids[i] for i in inner_train_idx]
+                val_ids = [train_ids[i] for i in val_idx]
+
+                train_ds = CWT3DImageDataset(data_dir, inner_train_ids, target_size=params["target_size"])
+                val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=params["target_size"])
+
+                train_loader = DataLoader(train_ds, batch_size=params["batch_size"], shuffle=True)
+                val_loader = DataLoader(val_ds, batch_size=params["batch_size"])
+
+                label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in inner_train_ids])
+                total = sum(label_counts.values())
+                weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
+
+                sample_input = next(iter(train_loader))[0]
+                input_shape = sample_input.shape[1:]
+                model = Simple3DCNN(input_shape=input_shape).to(device)
+                model = train_model(model, train_loader, val_loader, weights, params["lr"], device)
+
+                val_preds, val_true = [], []
+                with torch.no_grad():
+                    for images, labels in val_loader:
+                        images = images.to(device)
+                        outputs = model(images)
+                        _, preds = torch.max(outputs, 1)
+                        val_preds.extend(preds.cpu().numpy())
+                        val_true.extend(labels.numpy())
+                val_f1 = f1_score(val_true, val_preds, zero_division=0)
+                inner_scores.append(val_f1)
+
+            avg_score = np.mean(inner_scores)
+            if avg_score > best_score:
+                best_score = avg_score
+                best_params = params
+
+        # Train final model on full outer train set with best params
+        train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=best_params["target_size"])
+        test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=best_params["target_size"])
+        train_loader = DataLoader(train_ds, batch_size=best_params["batch_size"], shuffle=True)
+        test_loader = DataLoader(test_ds, batch_size=best_params["batch_size"])
+
+        label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in train_ids])
+        total = sum(label_counts.values())
+        weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
+
+        sample_input = next(iter(train_loader))[0]
+        input_shape = sample_input.shape[1:]
+        final_model = Simple3DCNN(input_shape=input_shape).to(device)
+        final_model = train_model(final_model, train_loader, test_loader, weights, best_params["lr"], device)
+
+        print("\n--- Evaluating Final Model on Outer Fold Test Set ---")
+        evaluate_model(final_model, test_loader, device)
+
+if __name__ == "__main__":
+    DATA_DIR = "features/cwt_numpy"
+    run_nested_cv(DATA_DIR, outer_folds=5)
