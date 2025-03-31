@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
-from sklearn.model_selection import StratifiedKFold, ParameterGrid
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, precision_score, recall_score, f1_score, confusion_matrix
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -33,18 +33,25 @@ class CWT3DImageDataset(Dataset):
 
         return volume_tensor, label_tensor
 
-# === Model Definition ===
-class Simple3DCNN(nn.Module):
+# === Enhanced Model Definition ===
+class Enhanced3DCNN(nn.Module):
     def __init__(self, input_shape=(1, 9, 64, 128)):
-        super(Simple3DCNN, self).__init__()
+        super(Enhanced3DCNN, self).__init__()
         self.feature_extractor = nn.Sequential(
             nn.Conv3d(1, 16, kernel_size=3, padding=1),
+            nn.BatchNorm3d(16),
             nn.ReLU(),
             nn.MaxPool3d(kernel_size=(1, 2, 2)),
 
             nn.Conv3d(16, 32, kernel_size=3, padding=1),
+            nn.BatchNorm3d(32),
             nn.ReLU(),
             nn.MaxPool3d(kernel_size=(1, 2, 2)),
+
+            nn.Conv3d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm3d(64),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(1, 2, 2))
         )
 
         with torch.no_grad():
@@ -56,6 +63,7 @@ class Simple3DCNN(nn.Module):
             nn.Flatten(),
             nn.Linear(self.flattened_size, 128),
             nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(128, 2)
         )
 
@@ -71,17 +79,11 @@ def train_model(model, train_loader, val_loader, class_weights, lr, device, epoc
 
     best_val_f1 = 0.0
     no_improve_epochs = 0
-    early_stop = False
     best_model_state = None
 
     for epoch in range(epochs):
-        if early_stop:
-            print("Early stopping triggered.")
-            break
-
         model.train()
         running_loss = 0.0
-
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
@@ -91,7 +93,6 @@ def train_model(model, train_loader, val_loader, class_weights, lr, device, epoc
             optimizer.step()
             running_loss += loss.item()
 
-        # === Validation ===
         model.eval()
         val_preds, val_true = [], []
         with torch.no_grad():
@@ -103,13 +104,13 @@ def train_model(model, train_loader, val_loader, class_weights, lr, device, epoc
                 val_true.extend(labels.cpu().numpy())
 
         val_acc = np.mean(np.array(val_preds) == np.array(val_true))
-        val_precision = precision_score(val_true, val_preds, zero_division=0)
-        val_recall = recall_score(val_true, val_preds, zero_division=0)
-        val_f1 = f1_score(val_true, val_preds, zero_division=0)
+        val_precision = precision_score(val_true, val_preds, average='macro', zero_division=0)
+        val_recall = recall_score(val_true, val_preds, average='macro', zero_division=0)
+        val_f1 = f1_score(val_true, val_preds, average='macro', zero_division=0)
 
         scheduler.step(val_f1)
 
-        print(f"Epoch {epoch+1}/{epochs} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Precision: {val_precision:.4f} | Recall: {val_recall:.4f} | F1: {val_f1:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Macro Precision: {val_precision:.4f} | Macro Recall: {val_recall:.4f} | Macro F1: {val_f1:.4f}")
 
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
@@ -120,7 +121,8 @@ def train_model(model, train_loader, val_loader, class_weights, lr, device, epoc
             no_improve_epochs += 1
             print(f"No improvement for {no_improve_epochs} epoch(s).")
             if no_improve_epochs >= patience:
-                early_stop = True
+                print("Early stopping triggered.")
+                break
 
     if best_model_state:
         model.load_state_dict(best_model_state)
@@ -143,86 +145,40 @@ def evaluate_model(model, test_loader, device):
     print("\n=== Confusion Matrix ===")
     print(confusion_matrix(all_labels, all_preds))
 
-# === Main Grid Search + Nested CV Driver ===
-def run_nested_cv(data_dir, outer_folds=5):
+# === Main Training Driver ===
+def run_simple_training(data_dir):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     all_ids = [f.split("_volume.npy")[0] for f in os.listdir(data_dir) if f.endswith("_volume.npy")]
     all_labels = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in all_ids]
 
-    param_grid = {
-        "lr": [1e-3, 5e-4],
-        "batch_size": [8],
-        "target_size": [(64, 128)]
-    }
+    batch_size = 8
+    target_size = (64, 128)
+    lr = 1e-3
 
-    outer_cv = StratifiedKFold(n_splits=outer_folds, shuffle=True, random_state=42)
+    train_ids, test_ids, train_labels, test_labels = train_test_split(all_ids, all_labels, test_size=0.2, stratify=all_labels, random_state=42)
+    train_ids, val_ids = train_test_split(train_ids, test_size=0.25, stratify=train_labels, random_state=42)
 
-    for fold, (train_idx, test_idx) in enumerate(outer_cv.split(all_ids, all_labels)):
-        print(f"\n=== Outer Fold {fold+1}/{outer_folds} ===")
-        train_ids = [all_ids[i] for i in train_idx]
-        test_ids = [all_ids[i] for i in test_idx]
+    train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=target_size)
+    val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=target_size)
+    test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=target_size)
 
-        best_score = 0.0
-        best_params = None
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size)
+    test_loader = DataLoader(test_ds, batch_size=batch_size)
 
-        inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+    label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in train_ids])
+    total = sum(label_counts.values())
+    weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
 
-        for params in ParameterGrid(param_grid):
-            inner_scores = []
-            inner_labels = [all_labels[i] for i in train_idx]
-            for inner_train_idx, val_idx in inner_cv.split(train_ids, inner_labels):
-                inner_train_ids = [train_ids[i] for i in inner_train_idx]
-                val_ids = [train_ids[i] for i in val_idx]
+    sample_input = next(iter(train_loader))[0]
+    input_shape = sample_input.shape[1:]
+    model = Enhanced3DCNN(input_shape=input_shape).to(device)
+    model = train_model(model, train_loader, val_loader, weights, lr, device)
 
-                train_ds = CWT3DImageDataset(data_dir, inner_train_ids, target_size=params["target_size"])
-                val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=params["target_size"])
-
-                train_loader = DataLoader(train_ds, batch_size=params["batch_size"], shuffle=True)
-                val_loader = DataLoader(val_ds, batch_size=params["batch_size"])
-
-                label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in inner_train_ids])
-                total = sum(label_counts.values())
-                weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
-
-                sample_input = next(iter(train_loader))[0]
-                input_shape = sample_input.shape[1:]
-                model = Simple3DCNN(input_shape=input_shape).to(device)
-                model = train_model(model, train_loader, val_loader, weights, params["lr"], device)
-
-                val_preds, val_true = [], []
-                with torch.no_grad():
-                    for images, labels in val_loader:
-                        images = images.to(device)
-                        outputs = model(images)
-                        _, preds = torch.max(outputs, 1)
-                        val_preds.extend(preds.cpu().numpy())
-                        val_true.extend(labels.numpy())
-                val_f1 = f1_score(val_true, val_preds, zero_division=0)
-                inner_scores.append(val_f1)
-
-            avg_score = np.mean(inner_scores)
-            if avg_score > best_score:
-                best_score = avg_score
-                best_params = params
-
-        # Train final model on full outer train set with best params
-        train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=best_params["target_size"])
-        test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=best_params["target_size"])
-        train_loader = DataLoader(train_ds, batch_size=best_params["batch_size"], shuffle=True)
-        test_loader = DataLoader(test_ds, batch_size=best_params["batch_size"])
-
-        label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in train_ids])
-        total = sum(label_counts.values())
-        weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
-
-        sample_input = next(iter(train_loader))[0]
-        input_shape = sample_input.shape[1:]
-        final_model = Simple3DCNN(input_shape=input_shape).to(device)
-        final_model = train_model(final_model, train_loader, test_loader, weights, best_params["lr"], device)
-
-        print("\n--- Evaluating Final Model on Outer Fold Test Set ---")
-        evaluate_model(final_model, test_loader, device)
+    print("\n--- Evaluating Final Model on Test Set ---")
+    evaluate_model(model, test_loader, device)
 
 if __name__ == "__main__":
     DATA_DIR = "features/cwt_numpy"
-    run_nested_cv(DATA_DIR, outer_folds=5)
+    run_simple_training(DATA_DIR)
