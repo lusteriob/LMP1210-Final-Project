@@ -3,9 +3,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import classification_report, precision_score, recall_score, f1_score, confusion_matrix, balanced_accuracy_score
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from collections import Counter
@@ -73,11 +73,11 @@ class Enhanced3DCNN(nn.Module):
 
 # === Training Function ===
 def train_model(model, train_loader, val_loader, class_weights, lr, device, epochs=50, patience=3):
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=1, verbose=True)
 
-    best_val_f1 = 0.0
+    best_score = 0.0
     no_improve_epochs = 0
     best_model_state = None
 
@@ -107,13 +107,18 @@ def train_model(model, train_loader, val_loader, class_weights, lr, device, epoc
         val_precision = precision_score(val_true, val_preds, average='macro', zero_division=0)
         val_recall = recall_score(val_true, val_preds, average='macro', zero_division=0)
         val_f1 = f1_score(val_true, val_preds, average='macro', zero_division=0)
+        val_bacc = balanced_accuracy_score(val_true, val_preds)
 
-        scheduler.step(val_f1)
+        recall_per_class = recall_score(val_true, val_preds, average=None, zero_division=0)
+        healthy_recall = recall_per_class[0] if len(recall_per_class) > 1 else 0.0
 
-        print(f"Epoch {epoch+1}/{epochs} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Macro Precision: {val_precision:.4f} | Macro Recall: {val_recall:.4f} | Macro F1: {val_f1:.4f}")
+        scheduler.step(val_bacc)
 
-        if val_f1 > best_val_f1:
-            best_val_f1 = val_f1
+        print(f"Epoch {epoch+1}/{epochs} | Loss: {running_loss:.4f} | Val Acc: {val_acc:.4f} | Macro Precision: {val_precision:.4f} | Macro Recall: {val_recall:.4f} | Macro F1: {val_f1:.4f} | Balanced Acc: {val_bacc:.4f}")
+        print(f"  Healthy Recall: {healthy_recall:.4f}")
+
+        if val_bacc > best_score and healthy_recall >= 0.3:
+            best_score = val_bacc
             no_improve_epochs = 0
             best_model_state = model.state_dict()
             print("Saved new best model!")
@@ -163,11 +168,18 @@ def run_simple_training(data_dir):
     val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=target_size)
     test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=target_size)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    # === Weighted Sampler Setup ===
+    label_list = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in train_ids]
+    class_sample_counts = np.bincount(label_list)
+    class_weights = 1. / class_sample_counts
+    sample_weights = [class_weights[label] for label in label_list]
+    sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler)
     val_loader = DataLoader(val_ds, batch_size=batch_size)
     test_loader = DataLoader(test_ds, batch_size=batch_size)
 
-    label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in train_ids])
+    label_counts = Counter(label_list)
     total = sum(label_counts.values())
     weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
 
