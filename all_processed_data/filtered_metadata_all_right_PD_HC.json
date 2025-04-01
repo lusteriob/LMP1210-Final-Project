@@ -1,0 +1,532 @@
+{
+    "tasks": [
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 0,
+            "end": 976
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 976,
+            "end": 1952
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 1952,
+            "end": 2928
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 2928,
+            "end": 3904
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 3904,
+            "end": 4880
+        },
+        {
+            "name": "Relaxed1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 4880,
+            "end": 5856
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 5856,
+            "end": 6832
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 6832,
+            "end": 7808
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 7808,
+            "end": 8784
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 8784,
+            "end": 9760
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 9760,
+            "end": 10736
+        },
+        {
+            "name": "Relaxed2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 10736,
+            "end": 11712
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 11712,
+            "end": 12688
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 12688,
+            "end": 13664
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 13664,
+            "end": 14640
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 14640,
+            "end": 15616
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 15616,
+            "end": 16592
+        },
+        {
+            "name": "RelaxedTask1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 16592,
+            "end": 17568
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 17568,
+            "end": 18544
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 18544,
+            "end": 19520
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 19520,
+            "end": 20496
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 20496,
+            "end": 21472
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 21472,
+            "end": 22448
+        },
+        {
+            "name": "RelaxedTask2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 22448,
+            "end": 23424
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 23424,
+            "end": 24400
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 24400,
+            "end": 25376
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 25376,
+            "end": 26352
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 26352,
+            "end": 27328
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 27328,
+            "end": 28304
+        },
+        {
+            "name": "StretchHold",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 28304,
+            "end": 29280
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 29280,
+            "end": 30256
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 30256,
+            "end": 31232
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 31232,
+            "end": 32208
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 32208,
+            "end": 33184
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 33184,
+            "end": 34160
+        },
+        {
+            "name": "HoldWeight",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 34160,
+            "end": 35136
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 35136,
+            "end": 36112
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 36112,
+            "end": 37088
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 37088,
+            "end": 38064
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 38064,
+            "end": 39040
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 39040,
+            "end": 40016
+        },
+        {
+            "name": "DrinkGlas",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 40016,
+            "end": 40992
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 40992,
+            "end": 41968
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 41968,
+            "end": 42944
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 42944,
+            "end": 43920
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 43920,
+            "end": 44896
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 44896,
+            "end": 45872
+        },
+        {
+            "name": "CrossArms",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 45872,
+            "end": 46848
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 46848,
+            "end": 47824
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 47824,
+            "end": 48800
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 48800,
+            "end": 49776
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 49776,
+            "end": 50752
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 50752,
+            "end": 51728
+        },
+        {
+            "name": "TouchNose",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 51728,
+            "end": 52704
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 52704,
+            "end": 53680
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 53680,
+            "end": 54656
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 54656,
+            "end": 55632
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 55632,
+            "end": 56608
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 56608,
+            "end": 57584
+        },
+        {
+            "name": "Entrainment1",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 57584,
+            "end": 58560
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "X",
+            "start": 58560,
+            "end": 59536
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Y",
+            "start": 59536,
+            "end": 60512
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Accelerometer",
+            "axis": "Z",
+            "start": 60512,
+            "end": 61488
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "X",
+            "start": 61488,
+            "end": 62464
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Y",
+            "start": 62464,
+            "end": 63440
+        },
+        {
+            "name": "Entrainment2",
+            "wrist": "RightWrist",
+            "sensor": "Gyroscope",
+            "axis": "Z",
+            "start": 63440,
+            "end": 64416
+        }
+    ]
+}
