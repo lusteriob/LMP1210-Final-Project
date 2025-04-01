@@ -11,6 +11,7 @@ from tqdm import tqdm
 from scipy.signal import welch
 
 """
+# UNCOMMENT TO USE RESTRICTED DATA
 # Paths
 DATA_DIR = "processed_data"
 BIN_META_PATH = os.path.join(DATA_DIR, "bin_metadata.csv")
@@ -80,6 +81,8 @@ def extract_manual_features(bin_metadata, segment_metadata):
     y = pd.Series(label_list, name="Label")
     return X, y
 
+"""
+# UNCOMMENT TO USE RESTRICTED DATA
 def main():
     os.makedirs("features", exist_ok=True)
 
@@ -90,6 +93,18 @@ def main():
     y.to_csv("features/manual_labels_pads_style.csv", index=False)
 
     print("✅ Manual feature extraction complete and saved to /features/")
+"""
+
+def main():
+    os.makedirs("features_all", exist_ok=True)
+
+    X, y = extract_manual_features(bin_metadata, segment_metadata)
+
+    # Save to /features/
+    X.to_pickle("features_all/manual_features_pads_style.pkl")
+    y.to_csv("features_all/manual_labels_pads_style.csv", index=False)
+
+    print("✅ Manual feature extraction complete and saved to /features_all/")
 
 if __name__ == "__main__":
     main()
