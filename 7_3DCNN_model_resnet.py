@@ -10,13 +10,17 @@ import torch.nn.functional as F
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from collections import Counter
 from tqdm import tqdm
+import random
+
+from monai.networks.nets import resnet
 
 # === Dataset Definition ===
 class CWT3DImageDataset(Dataset):
-    def __init__(self, data_dir, patient_ids, target_size=(64, 128)):
+    def __init__(self, data_dir, patient_ids, target_size=(16, 96, 96), augment_healthy=False):
         self.data_dir = data_dir
         self.patient_ids = patient_ids
         self.target_size = target_size
+        self.augment_healthy = augment_healthy
 
     def __len__(self):
         return len(self.patient_ids)
@@ -24,57 +28,34 @@ class CWT3DImageDataset(Dataset):
     def __getitem__(self, idx):
         patient_id = self.patient_ids[idx]
         volume = np.load(os.path.join(self.data_dir, f"{patient_id}_volume.npy"))
+
+        if volume.ndim != 3:
+            raise ValueError(f"Expected shape (D, H, W) but got {volume.shape}")
+
         with open(os.path.join(self.data_dir, f"{patient_id}_label.txt")) as f:
             label = int(f.read().strip())
 
-        volume_tensor = torch.tensor(volume, dtype=torch.float32).unsqueeze(0)
-        volume_tensor = F.interpolate(volume_tensor, size=self.target_size, mode='bilinear', align_corners=False)
+        # Gaussian noise only for healthy class
+        if self.augment_healthy and label == 0 and np.random.rand() < 0.5:
+            noise = np.random.normal(0.0, 0.01, volume.shape)
+            volume = np.clip(volume + noise, 0.0, 1.0)
+
+        volume_tensor = torch.tensor(volume, dtype=torch.float32)
+        volume_tensor = volume_tensor.unsqueeze(0).unsqueeze(0)
+        volume_tensor = F.interpolate(volume_tensor, size=self.target_size, mode='trilinear', align_corners=False)
+        volume_tensor = volume_tensor.squeeze(0)
+
         label_tensor = torch.tensor(label, dtype=torch.long)
 
         return volume_tensor, label_tensor
 
-# === Enhanced Model Definition ===
-class Enhanced3DCNN(nn.Module):
-    def __init__(self, input_shape=(1, 9, 64, 128)):
-        super(Enhanced3DCNN, self).__init__()
-        self.feature_extractor = nn.Sequential(
-            nn.Conv3d(1, 16, kernel_size=3, padding=1),
-            nn.BatchNorm3d(16),
-            nn.ReLU(),
-            nn.MaxPool3d(kernel_size=(1, 2, 2)),
-
-            nn.Conv3d(16, 32, kernel_size=3, padding=1),
-            nn.BatchNorm3d(32),
-            nn.ReLU(),
-            nn.MaxPool3d(kernel_size=(1, 2, 2)),
-
-            nn.Conv3d(32, 64, kernel_size=3, padding=1),
-            nn.BatchNorm3d(64),
-            nn.ReLU(),
-            nn.MaxPool3d(kernel_size=(1, 2, 2))
-        )
-
-        with torch.no_grad():
-            dummy = torch.zeros((1,) + input_shape)
-            dummy_out = self.feature_extractor(dummy)
-            self.flattened_size = dummy_out.view(1, -1).shape[1]
-
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(self.flattened_size, 128),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, 2)
-        )
-
-    def forward(self, x):
-        x = self.feature_extractor(x)
-        return self.classifier(x)
-
 # === Training Function ===
 def train_model(model, train_loader, val_loader, class_weights, lr, device, epochs=50, patience=3):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.Adam([
+        {'params': model.layer4.parameters(), 'lr': lr * 0.1},
+        {'params': model.fc.parameters(), 'lr': lr}
+    ])
     scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=1, verbose=True)
 
     best_score = 0.0
@@ -151,46 +132,40 @@ def evaluate_model(model, test_loader, device):
     print(confusion_matrix(all_labels, all_preds))
 
 # === Main Training Driver ===
-def run_simple_training(data_dir):
+def run_resnet_with_aug(data_dir):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     all_ids = [f.split("_volume.npy")[0] for f in os.listdir(data_dir) if f.endswith("_volume.npy")]
     all_labels = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in all_ids]
 
     batch_size = 8
-    target_size = (64, 128)
+    target_size = (16, 96, 96)
     lr = 1e-3
 
     train_ids, test_ids, train_labels, test_labels = train_test_split(all_ids, all_labels, test_size=0.2, stratify=all_labels, random_state=42)
     train_ids, val_ids = train_test_split(train_ids, test_size=0.25, stratify=train_labels, random_state=42)
 
-    train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=target_size)
+    train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=target_size, augment_healthy=True)
     val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=target_size)
     test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=target_size)
 
-    # === Weighted Sampler Setup ===
-    label_list = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in train_ids]
-    class_sample_counts = np.bincount(label_list)
-    class_weights = 1. / class_sample_counts
-    sample_weights = [class_weights[label] for label in label_list]
-    sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
+    label_counts = Counter([int(open(os.path.join(data_dir, f"{pid}_label.txt")).read()) for pid in train_ids])
+    sample_weights = [1.0 / label_counts[int(open(os.path.join(data_dir, f"{pid}_label.txt")).read())] for pid in train_ids]
+    sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler)
     val_loader = DataLoader(val_ds, batch_size=batch_size)
     test_loader = DataLoader(test_ds, batch_size=batch_size)
 
-    label_counts = Counter(label_list)
-    total = sum(label_counts.values())
-    weights = torch.tensor([total / label_counts[i] for i in sorted(label_counts.keys())], dtype=torch.float32).to(device)
+    model = resnet.resnet18(spatial_dims=3, n_input_channels=1, num_classes=2, pretrained=False)
+    model = model.to(device)
 
-    sample_input = next(iter(train_loader))[0]
-    input_shape = sample_input.shape[1:]
-    model = Enhanced3DCNN(input_shape=input_shape).to(device)
-    model = train_model(model, train_loader, val_loader, weights, lr, device)
+    class_weights = None  # unweighted loss
+    model = train_model(model, train_loader, val_loader, class_weights, lr, device)
 
     print("\n--- Evaluating Final Model on Test Set ---")
     evaluate_model(model, test_loader, device)
 
 if __name__ == "__main__":
     DATA_DIR = "features/cwt_numpy"
-    run_simple_training(DATA_DIR)
+    run_resnet_with_aug(DATA_DIR)

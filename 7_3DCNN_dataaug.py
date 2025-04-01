@@ -13,10 +13,11 @@ from tqdm import tqdm
 
 # === Dataset Definition ===
 class CWT3DImageDataset(Dataset):
-    def __init__(self, data_dir, patient_ids, target_size=(64, 128)):
+    def __init__(self, data_dir, patient_ids, target_size=(64, 128), train=False):
         self.data_dir = data_dir
         self.patient_ids = patient_ids
         self.target_size = target_size
+        self.train = train
 
     def __len__(self):
         return len(self.patient_ids)
@@ -29,8 +30,13 @@ class CWT3DImageDataset(Dataset):
 
         volume_tensor = torch.tensor(volume, dtype=torch.float32).unsqueeze(0)
         volume_tensor = F.interpolate(volume_tensor, size=self.target_size, mode='bilinear', align_corners=False)
-        label_tensor = torch.tensor(label, dtype=torch.long)
 
+        # Gaussian noise (applied 50% of the time during training)
+        if self.train and np.random.rand() < 0.5:
+            noise = torch.randn_like(volume_tensor) * 0.01
+            volume_tensor += noise
+
+        label_tensor = torch.tensor(label, dtype=torch.long)
         return volume_tensor, label_tensor
 
 # === Enhanced Model Definition ===
@@ -164,9 +170,9 @@ def run_simple_training(data_dir):
     train_ids, test_ids, train_labels, test_labels = train_test_split(all_ids, all_labels, test_size=0.2, stratify=all_labels, random_state=42)
     train_ids, val_ids = train_test_split(train_ids, test_size=0.25, stratify=train_labels, random_state=42)
 
-    train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=target_size)
-    val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=target_size)
-    test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=target_size)
+    train_ds = CWT3DImageDataset(data_dir, train_ids, target_size=target_size, train=True)
+    val_ds = CWT3DImageDataset(data_dir, val_ids, target_size=target_size, train=False)
+    test_ds = CWT3DImageDataset(data_dir, test_ids, target_size=target_size, train=False)
 
     # === Weighted Sampler Setup ===
     label_list = [int(open(os.path.join(data_dir, f"{pid}_label.txt")).read().strip()) for pid in train_ids]
