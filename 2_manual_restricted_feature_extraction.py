@@ -10,10 +10,20 @@ import pandas as pd
 from tqdm import tqdm
 from scipy.signal import welch
 
+"""
 # Paths
 DATA_DIR = "processed_data"
 BIN_META_PATH = os.path.join(DATA_DIR, "bin_metadata.csv")
 SEGMENT_META_PATH = os.path.join(DATA_DIR, "filtered_metadata_gyroscope_right_PD_HC.json")
+"""
+
+
+# UNCOMMENT TO USE ALL RIGHT WRIST DATA
+# Paths
+DATA_DIR = "all_processed_data"
+BIN_META_PATH = os.path.join(DATA_DIR, "bin_metadata.csv")
+SEGMENT_META_PATH = os.path.join(DATA_DIR, "filtered_metadata_all_right_PD_HC.json")
+
 
 # Load metadata
 bin_metadata = pd.read_csv(BIN_META_PATH)
