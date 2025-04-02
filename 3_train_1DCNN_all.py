@@ -7,6 +7,35 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 import tensorflow as tf
 from keras import layers, models, callbacks
 from sklearn.metrics import balanced_accuracy_score
+from itertools import product
+
+# Create class to optimise on BACC
+class BalancedAccuracyCallback(tf.keras.callbacks.Callback):
+    def __init__(self, validation_data, patience=5):
+        super().__init__()
+        self.X_val, self.y_val = validation_data
+        self.patience = patience
+        self.best_bacc = 0
+        self.wait = 0
+        self.best_weights = None
+
+    def on_epoch_end(self, epoch, logs=None):
+        y_pred = self.model.predict(self.X_val).ravel()
+        y_pred_labels = (y_pred > 0.5).astype(int)
+        bacc = balanced_accuracy_score(self.y_val, y_pred_labels)
+
+        print(f"🔎 Epoch {epoch+1}: BACC={bacc:.4f} (Best so far: {self.best_bacc:.4f})")
+
+        if bacc > self.best_bacc:
+            self.best_bacc = bacc
+            self.wait = 0
+            self.best_weights = self.model.get_weights()
+        else:
+            self.wait += 1
+            if self.wait >= self.patience:
+                print("⏹️ Early stopping triggered by BACC")
+                self.model.stop_training = True
+                self.model.set_weights(self.best_weights)
 
 
 # === Load data ===
@@ -48,15 +77,18 @@ def build_model(filters=64, kernel_size=5, dropout=0.5):
     return model
 
 # === Hyperparameters to tune
+filter_vals = [64, 128]
+kernel_vals = [3, 5, 7]
+dropout_vals = [0.3, 0.4, 0.5]
+
 param_grid = [
-    {"filters": 64, "kernel_size": 5, "dropout": 0.5},
-    {"filters": 128, "kernel_size": 3, "dropout": 0.3},
-    {"filters": 64, "kernel_size": 7, "dropout": 0.5},
+    {"filters": f, "kernel_size": k, "dropout": d}
+    for f, k, d in product(filter_vals, kernel_vals, dropout_vals)
 ]
 
 # === Nested CV Setup
 outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-inner_cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 results = []
 
@@ -82,9 +114,11 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
 
             model = build_model(**params)
 
-            early_stop = callbacks.EarlyStopping(
-                monitor='val_loss', patience=5, restore_best_weights=True
-            )
+            """
+            # UNCOMMENT TO USE EARLY STOPPING BASED ON VAL LOSS
+            early_stop = callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+            """
+            early_stop = BalancedAccuracyCallback(validation_data=(X_val, y_val), patience=5)
 
             model.fit(
                 X_train_inner, y_train_inner,
@@ -95,8 +129,14 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
             )
 
             y_val_pred = model.predict(X_val).ravel()
+
+            """
+            # UNCOMMENT TO USE AUC FOR VAL SCORE
             auc = roc_auc_score(y_val, y_val_pred)
             val_scores.append(auc)
+            """
+            bacc = balanced_accuracy_score(y_val, y_val_pred > 0.5)
+            val_scores.append(bacc)
 
         avg_val_score = np.mean(val_scores)
         print(f"   🔍 Params {params} → Avg AUC: {avg_val_score:.4f}")
@@ -108,14 +148,28 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
     print(f"🧠 Best inner params: {best_params}")
     final_model = build_model(**best_params)
 
+    """    
     early_stop_outer = callbacks.EarlyStopping(
         monitor='val_loss', patience=7, restore_best_weights=True
     )
+    """
+
+    # Use one inner fold for validation
+    train_inner_idx, val_outer_idx = next(inner_cv.split(X_train_outer, y_train_outer))
+
+    X_train_final = X_train_outer[train_inner_idx]
+    y_train_final = y_train_outer[train_inner_idx]
+    X_val_outer = X_train_outer[val_outer_idx]
+    y_val_outer = y_train_outer[val_outer_idx]
+
+    early_stop_outer = BalancedAccuracyCallback(
+        validation_data=(X_val_outer, y_val_outer), patience=7
+    )
 
     history = final_model.fit(
-        X_train_outer, y_train_outer,
+        X_train_final, y_train_final,
+        validation_data=(X_val_outer, y_val_outer),
         class_weight="balanced",
-        validation_split=0.1,
         epochs=50,
         batch_size=32,
         callbacks=[early_stop_outer],
