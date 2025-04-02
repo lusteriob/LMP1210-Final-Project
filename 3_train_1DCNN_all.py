@@ -88,6 +88,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
 
             model.fit(
                 X_train_inner, y_train_inner,
+                class_weight="balanced",
                 validation_data=(X_val, y_val),
                 epochs=50, batch_size=32,
                 callbacks=[early_stop], verbose=0
@@ -113,6 +114,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
 
     history = final_model.fit(
         X_train_outer, y_train_outer,
+        class_weight="balanced",
         validation_split=0.1,
         epochs=50,
         batch_size=32,
@@ -120,7 +122,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
         verbose=0
     )
 
-    model_path = f"cnn_models/cnn_fold{fold_idx + 1}_best.h5"
+    model_path = f"models/cnn_models/cnn_fold{fold_idx + 1}_best.h5"
     final_model.save(model_path)
 
     y_test_pred = final_model.predict(X_test_outer).ravel()
@@ -140,7 +142,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
 
 # === Save + Display results
 results_df = pd.DataFrame(results)
-results_df.to_csv("cnn_nestedcv_results.csv", index=False)
+results_df.to_csv("models/cnn_models/cnn_nestedcv_results.csv", index=False)
 
 print("\n📊 Nested CV Summary:")
 print(results_df)
