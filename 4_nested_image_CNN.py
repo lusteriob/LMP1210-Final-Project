@@ -23,7 +23,7 @@ DATA_DIR = "features_all/cwt_numpy_volumes"
 OUTPUT_DIR = "cnn_nestedcv_results"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 NUM_OUTER_FOLDS = 5
-NUM_INNER_FOLDS = 5
+NUM_INNER_FOLDS = 3
 EPOCHS = 20
 PATIENCE = 5
 BATCH_SIZE = 4
@@ -217,7 +217,7 @@ def nested_cv():
     results = []
 
     # Grid parameters
-    grid = list(product([16, 32], [3, 5], [0.3, 0.5], [0.0, 0.05, 0.1]))  # filters, kernel, dropout, noise_std
+    grid = list(product([16, 32], [3], [0.3, 0.5], [0.0, 0.1]))  # filters, kernel, dropout, noise_std
 
     print("\n🔁 Starting Outer Fold Loop...")
     for outer_idx, (trainval_idx, test_idx) in tqdm(list(enumerate(outer_cv.split(all_ids, all_labels))),
