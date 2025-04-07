@@ -166,18 +166,21 @@ def evaluate_model(model, loader):
 
 # === Task Importance with LOTO ablation === #
 
-def mask_task(tensor_batch, task_idx, total_tasks=11):
+def mask_task(tensor_batch, task_idx, total_tasks=11, channels_per_task=6):
     """
-    Zero out the slice corresponding to task_idx along the depth axis.
-    Assumes input shape: (B, C=1, D=total_tasks, H, W)
+    Zero out all channels associated with a given task.
     """
-    tensor_batch = tensor_batch.clone()
-    if tensor_batch.shape[2] != total_tasks:
-        raise ValueError(f"Expected {total_tasks} tasks in depth, got {tensor_batch.shape[2]}")
-    tensor_batch[:, :, task_idx] = 0.0
+    tensor_batch = tensor_batch.clone()  # (B, C=1, D=66, H, W)
+    expected_channels = total_tasks * channels_per_task
+    if tensor_batch.shape[2] != expected_channels:
+        raise ValueError(f"Expected {expected_channels} channels in depth, got {tensor_batch.shape[2]}")
+
+    start = task_idx * channels_per_task
+    end = start + channels_per_task
+    tensor_batch[:, :, start:end] = 0.0
     return tensor_batch
 
-def task_ablation(model, test_loader, num_tasks=11):
+def task_ablation(model, test_loader, num_tasks=11, channels_per_task=6):
     print("\n📉 Starting Leave-One-Task-Out (LOTO) Ablation...")
     full_metrics = evaluate_model(model, test_loader)
     baseline_bacc = full_metrics["bacc"]
@@ -188,7 +191,7 @@ def task_ablation(model, test_loader, num_tasks=11):
         preds, labels, probs = [], [], []
         with torch.no_grad():
             for x, y in test_loader:
-                x_masked = mask_task(x, task_idx)
+                x_masked = mask_task(x, task_idx, total_tasks=num_tasks, channels_per_task=channels_per_task)
                 x_masked = x_masked.to(DEVICE, non_blocking=True)
                 output = model(x_masked)
                 probs_batch = F.softmax(output, dim=1)[:, 1].cpu().numpy()
@@ -269,7 +272,7 @@ def nested_cv():
         final_metrics = evaluate_model(best_model, test_loader)
 
         # LOTO ablation + save results
-        drops = task_ablation(best_model, test_loader, num_tasks=11)
+        drops = task_ablation(best_model, test_loader, num_tasks=11, channels_per_task=6)
         df_importance = pd.DataFrame(drops, columns=["task", "delta_bacc"])
         df_importance.to_csv(os.path.join(OUTPUT_DIR, f"fold{outer_idx+1}_task_importance.csv"), index=False)
 
