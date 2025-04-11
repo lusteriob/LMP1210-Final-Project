@@ -32,7 +32,7 @@ class BalancedAccuracyCallback(tf.keras.callbacks.Callback):
         else:
             self.wait += 1
             if self.wait >= self.patience:
-                print("⏹️ Early stopping triggered by BACC")
+                print("Early stopping triggered by BACC")
                 self.model.stop_training = True
                 self.model.set_weights(self.best_weights)
 
@@ -87,7 +87,7 @@ inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 results = []
 
 for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
-    print(f"\n🔁 Outer Fold {fold_idx + 1}/5")
+    print(f"\nOuter Fold {fold_idx + 1}/5")
     X_outer_train, X_outer_test = X[train_idx], X[test_idx]
     y_outer_train, y_outer_test = y[train_idx], y[test_idx]
 
@@ -100,7 +100,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
         inner_models = []
 
         for inner_fold_idx, (inner_train_idx, inner_val_idx) in enumerate(inner_cv.split(X_outer_train, y_outer_train)):
-            print(f"     🧪 Inner Fold {inner_fold_idx + 1}/5 for params {params}")
+            print(f"Inner Fold {inner_fold_idx + 1}/5 for params {params}")
             X_inner_train = X_outer_train[inner_train_idx]
             y_inner_train = y_outer_train[inner_train_idx]
             X_inner_val = X_outer_train[inner_val_idx]
@@ -126,7 +126,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
             inner_models.append(model)
 
         avg_bacc = np.mean(inner_scores)
-        print(f"   🔍 Params {params} → Avg BACC: {avg_bacc:.4f}")
+        print(f"Params {params} → Avg BACC: {avg_bacc:.4f}")
 
         if avg_bacc > best_inner_score:
             best_inner_score = avg_bacc
@@ -139,7 +139,7 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
     test_acc = accuracy_score(y_outer_test, y_test_pred > 0.5)
     test_bacc = balanced_accuracy_score(y_outer_test, y_test_pred > 0.5)
 
-    print(f"✅ Fold {fold_idx + 1}: AUC={test_auc:.4f}, ACC={test_acc:.4f}, BACC={test_bacc:.4f}")
+    print(f"Fold {fold_idx + 1}: AUC={test_auc:.4f}, ACC={test_acc:.4f}, BACC={test_bacc:.4f}")
 
     # Save model
     best_model.save(os.path.join(MODEL_DIR, f"cnn_fold{fold_idx + 1}_best_v2.h5"))
@@ -156,8 +156,8 @@ for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
 results_df = pd.DataFrame(results)
 results_df.to_csv(os.path.join(MODEL_DIR, "cnn_nestedcv_results_v2.csv"), index=False)
 
-print("\n📊 Nested CV Summary:")
+print("\nNested CV Summary:")
 print(results_df)
-print("\n✅ Mean AUC:", results_df['auc'].mean())
-print("✅ Mean ACC:", results_df['acc'].mean())
-print("✅ Mean BACC:", results_df['bacc'].mean())
+print("\nMean AUC:", results_df['auc'].mean())
+print("Mean ACC:", results_df['acc'].mean())
+print("Mean BACC:", results_df['bacc'].mean())

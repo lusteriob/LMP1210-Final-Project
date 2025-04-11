@@ -40,39 +40,3 @@ print("Train/Val/Test splits saved!")
 print(f"Train: {len(train_ids)} samples")
 print(f"Val:   {len(val_ids)} samples")
 print(f"Test:  {len(test_ids)} samples")
-
-
-import os
-import torch
-from torch.utils.data import Dataset
-import numpy as np
-
-class CWT3DImageDataset(Dataset):
-    def __init__(self, data_dir, split_file=None):
-        self.data_dir = data_dir
-
-        if split_file:
-            with open(split_file, "r") as f:
-                self.patient_ids = [line.strip() for line in f if line.strip()]
-        else:
-            self.patient_ids = [f.split("_volume.npy")[0] for f in os.listdir(data_dir) if f.endswith("_volume.npy")]
-
-    def __len__(self):
-        return len(self.patient_ids)
-
-    def __getitem__(self, idx):
-        patient_id = self.patient_ids[idx]
-
-        volume_path = os.path.join(self.data_dir, f"{patient_id}_volume.npy")
-        label_path = os.path.join(self.data_dir, f"{patient_id}_label.txt")
-
-        volume = np.load(volume_path)  # Shape: (9, H, W)
-         # Normalize volume to [0, 1] range
-        volume = volume / 255.0
-        with open(label_path, "r") as f:
-            label = int(f.read().strip())
-
-        volume_tensor = torch.tensor(volume, dtype=torch.float32).unsqueeze(0)  # Shape: (1, 9, H, W)
-        label_tensor = torch.tensor(label, dtype=torch.long)
-
-        return volume_tensor, label_tensor

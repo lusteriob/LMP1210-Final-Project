@@ -92,7 +92,7 @@ def main():
     X.to_pickle("features/manual_features_pads_style.pkl")
     y.to_csv("features/manual_labels_pads_style.csv", index=False)
 
-    print("✅ Manual feature extraction complete and saved to /features/")
+    print("Manual feature extraction complete and saved to /features/")
 """
 
 def main():
@@ -104,7 +104,7 @@ def main():
     X.to_pickle("features_all/manual_features_pads_style.pkl")
     y.to_csv("features_all/manual_labels_pads_style.csv", index=False)
 
-    print("✅ Manual feature extraction complete and saved to /features_all/")
+    print("Manual feature extraction complete and saved to /features_all/")
 
 if __name__ == "__main__":
     main()

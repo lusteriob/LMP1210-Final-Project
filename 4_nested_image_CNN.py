@@ -181,7 +181,7 @@ def mask_task(tensor_batch, task_idx, total_tasks=11, channels_per_task=6):
     return tensor_batch
 
 def task_ablation(model, test_loader, num_tasks=11, channels_per_task=6):
-    print("\n📉 Starting Leave-One-Task-Out (LOTO) Ablation...")
+    print("\nStarting Leave-One-Task-Out (LOTO) Ablation...")
     full_metrics = evaluate_model(model, test_loader)
     baseline_bacc = full_metrics["bacc"]
     print(f"Baseline BACC: {baseline_bacc:.4f}")
@@ -204,7 +204,7 @@ def task_ablation(model, test_loader, num_tasks=11, channels_per_task=6):
         print(f"Task {task_idx} ablation: ΔBACC = {drop:.4f}")
         drops.append((task_idx, drop))
 
-    print("\n📊 Task Importance Ranking (most impactful first):")
+    print("\nTask Importance Ranking (most impactful first):")
     for i, (task, drop) in enumerate(sorted(drops, key=lambda x: -x[1])):
         print(f"{i+1}. Task {task} → ΔBACC = {drop:.4f}")
 
@@ -224,24 +224,24 @@ def nested_cv():
 
     print("\n🔁 Starting Outer Fold Loop...")
     for outer_idx, (trainval_idx, test_idx) in tqdm(list(enumerate(outer_cv.split(all_ids, all_labels))),
-                                                    desc="🔁 Outer Folds", total=NUM_OUTER_FOLDS):
+                                                    desc="Outer Folds", total=NUM_OUTER_FOLDS):
         trainval_ids = [all_ids[i] for i in trainval_idx]
         trainval_labels = [all_labels[i] for i in trainval_idx]
         test_ids = [all_ids[i] for i in test_idx]
         test_labels = [all_labels[i] for i in test_idx]
 
-        print(f"\n🧪 Outer Fold {outer_idx + 1}/{NUM_OUTER_FOLDS} - Train/Val: {len(trainval_ids)}, Test: {len(test_ids)}")
-        print("🔍 Starting Grid Search over", len(grid), "configs...")
+        print(f"\nOuter Fold {outer_idx + 1}/{NUM_OUTER_FOLDS} - Train/Val: {len(trainval_ids)}, Test: {len(test_ids)}")
+        print("Starting Grid Search over", len(grid), "configs...")
 
         best_score, best_model, best_params = -1, None, None
         inner_cv = StratifiedKFold(n_splits=NUM_INNER_FOLDS, shuffle=True, random_state=42)
 
-        for filters, ksize, dropout, noise_std in tqdm(grid, desc="🔍 Grid Search (Inner)", leave=False):
-            print(f"  🧪 Trying config: filters={filters}, kernel_size={ksize}, dropout={dropout}, noise_std={noise_std}")
+        for filters, ksize, dropout, noise_std in tqdm(grid, desc="Grid Search (Inner)", leave=False):
+            print(f"Trying config: filters={filters}, kernel_size={ksize}, dropout={dropout}, noise_std={noise_std}")
             fold_scores = []
 
             for inner_train_idx, val_idx in tqdm(list(inner_cv.split(trainval_ids, trainval_labels)),
-                                                 desc="📊 Inner Folds", leave=False):
+                                                 desc="Inner Folds", leave=False):
                 inner_train_ids = [trainval_ids[i] for i in inner_train_idx]
                 inner_val_ids = [trainval_ids[i] for i in val_idx]
 
@@ -253,20 +253,20 @@ def nested_cv():
                 sample_input = next(iter(train_loader))[0]
                 model = Enhanced3DCNN(input_shape=sample_input.shape[1:], filters=filters,
                                       kernel_size=ksize, dropout=dropout).to(DEVICE)
-                print("    🚂 Training model...")
+                print("Training model...")
                 model = train_model(model, train_loader, val_loader, lr=1e-3, device=DEVICE)
                 metrics = evaluate_model(model, val_loader)
-                print(f"    📊 Inner Fold BACC: {metrics['bacc']:.4f}, F1: {metrics['f1']:.4f}")
+                print(f"Inner Fold BACC: {metrics['bacc']:.4f}, F1: {metrics['f1']:.4f}")
                 fold_scores.append(metrics["bacc"])
 
             avg_bacc = np.mean(fold_scores)
-            print(f"  ✅ Config average BACC: {avg_bacc:.4f}")
+            print(f"Config average BACC: {avg_bacc:.4f}")
             if avg_bacc > best_score:
                 best_score = avg_bacc
                 best_params = (filters, ksize, dropout, noise_std)
                 best_model = model
 
-        print("🧪 Evaluating best model on outer test set...")
+        print("Evaluating best model on outer test set...")
         test_ds = CWT3DImageDataset(DATA_DIR, test_ids, TARGET_SIZE)
         test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, pin_memory=True)
         final_metrics = evaluate_model(best_model, test_loader)
@@ -276,7 +276,7 @@ def nested_cv():
         df_importance = pd.DataFrame(drops, columns=["task", "delta_bacc"])
         df_importance.to_csv(os.path.join(OUTPUT_DIR, f"fold{outer_idx+1}_task_importance.csv"), index=False)
 
-        print(f"\n✅ Fold {outer_idx + 1}: Best Params={best_params}, BACC={final_metrics['bacc']:.4f}")
+        print(f"\nFold {outer_idx + 1}: Best Params={best_params}, BACC={final_metrics['bacc']:.4f}")
         torch.save(best_model.state_dict(), os.path.join(OUTPUT_DIR, f"cnn_fold{outer_idx+1}_best.pt"))
 
         results.append({
@@ -291,9 +291,9 @@ def nested_cv():
     # Save results
     df = pd.DataFrame(results)
     df.to_csv(os.path.join(OUTPUT_DIR, "nestedcv_results.csv"), index=False)
-    print("\n📊 Nested CV Results Summary:")
+    print("\nNested CV Results Summary:")
     print(df)
-    print(f"\n✅ Mean BACC: {df['bacc'].mean():.4f}")
+    print(f"\nMean BACC: {df['bacc'].mean():.4f}")
 
 if __name__ == "__main__":
     nested_cv()

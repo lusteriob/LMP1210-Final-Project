@@ -99,4 +99,4 @@ if __name__ == "__main__":
     print("Processing and filtering movement data...")
     process_movement_data(movement_dir, patient_data, filtered_metadata)
     
-    print(f"✅ Preprocessed data saved to {output_dir}. Metadata saved as {output_metadata_file}.")
+    print(f"Preprocessed data saved to {output_dir}. Metadata saved as {output_metadata_file}.")

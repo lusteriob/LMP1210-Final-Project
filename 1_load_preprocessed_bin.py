@@ -87,4 +87,4 @@ if __name__ == "__main__":
     metadata = load_preprocessed_metadata(metadata_json_path)
     filtered_metadata = filter_metadata(metadata)
     process_movement_data(movement_dir, patient_data, filtered_metadata)
-    print(f"✅ Processed data saved to {output_dir}. Metadata saved as {filtered_metadata_output}.")
+    print(f"Processed data saved to {output_dir}. Metadata saved as {filtered_metadata_output}.")

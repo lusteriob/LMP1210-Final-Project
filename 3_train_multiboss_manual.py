@@ -58,13 +58,13 @@ inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 # === Results storage ===
 results = []
 
-print("🔁 Running 5x5 nested CV on MultiBOSS feature sets...\n")
+print("Running 5x5 nested CV on MultiBOSS feature sets...\n")
 
 for name, X in feature_sets.items():
-    print(f"🔍 Feature Set: {name}")
+    print(f"Feature Set: {name}")
 
     for fold_idx, (train_idx, test_idx) in enumerate(tqdm(outer_cv.split(X, y), total=5, desc=f"{name} folds")):
-        print(f"\n🔄 Fold {fold_idx + 1}/5")
+        print(f"\nFold {fold_idx + 1}/5")
 
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
@@ -121,7 +121,7 @@ for name, X in feature_sets.items():
         }
         results.append(metrics)
 
-        print(f"✅ Fold {metrics['fold']} done: "
+        print(f"Fold {metrics['fold']} done: "
               f"BA={metrics['balanced_accuracy']:.4f}, "
               f"F1={metrics['f1']:.4f}, "
               f"AUC={metrics['roc_auc']:.4f}")
@@ -132,6 +132,6 @@ for name, X in feature_sets.items():
 results_df = pd.DataFrame(results)
 results_df.to_csv(os.path.join(model_dir, "metrics_summary.csv"), index=False)
 
-print("\n✅ Finished nested CV on MultiBOSS feature sets.")
-print("📊 Average performance by feature set:")
+print("\nFinished nested CV on MultiBOSS feature sets.")
+print("Average performance by feature set:")
 print(results_df.groupby("feature_set")[["balanced_accuracy", "f1", "precision", "recall", "roc_auc"]].mean())

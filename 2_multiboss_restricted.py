@@ -34,7 +34,7 @@ bin_metadata = pd.read_csv(BIN_META_PATH)
 with open(SEGMENT_META_PATH, "r") as f:
     segment_meta = json.load(f)
 
-# === Load 9 segments per patient (3 tasks × 3 axes)
+# Load 9 segments per patient (3 tasks × 3 axes)
 def load_segments(file_path, segment_meta):
     data = np.fromfile(file_path, dtype=np.float32)
     segments = [data[s["start"]:s["end"]] for s in segment_meta["tasks"]]
@@ -55,7 +55,7 @@ def extract_features(bin_metadata, segment_meta):
             y_list.append(label)
             pid_list.append(pid)
         except Exception as e:
-            print(f"⚠️ Failed for {pid}: {e}")
+            print(f"Failed for {pid}: {e}")
 
     X_raw = np.stack(X_list, axis=0)  # shape: (n_samples, 9, 976)
     y = pd.Series(y_list, name="Label")
@@ -72,7 +72,7 @@ def main():
     """
     X_raw, y, pids = extract_features(bin_metadata, segment_meta)
 
-    print(f"🧠 Fitting MultiBOSS on shape: {X_raw.shape}")
+    print(f"Fitting MultiBOSS on shape: {X_raw.shape}")
     model = MultiBOSS(
         data_shape=(66, 976),
         window_sizes=(40,),
@@ -83,7 +83,7 @@ def main():
     )
     """ 
     # Uncomment to work with the restricted data
-    print(f"🧠 Fitting MultiBOSS on shape: {X_raw.shape}")
+    print(f"Fitting MultiBOSS on shape: {X_raw.shape}")
     model = MultiBOSS(
         data_shape=(9, 976),
         window_sizes=(40,),
@@ -96,13 +96,13 @@ def main():
 
     X_boss = model.fit_transform(X_raw, y)
 
-    print("💾 Saving features and labels...")
+    print("Saving features and labels...")
     X_df = pd.DataFrame(X_boss)
     X_df["PatientID"] = pids.values
     X_df.to_pickle(OUTPUT_FEATURES)
     y.to_csv(OUTPUT_LABELS, index=False)
 
-    print("✅ MultiBOSS feature extraction complete!")
+    print("MultiBOSS feature extraction complete!")
 
 if __name__ == "__main__":
     main()
